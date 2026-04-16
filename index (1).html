@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coaching App — Batool</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#f0f6fc;min-height:100vh}
+.app{max-width:460px;margin:0 auto;padding:16px}
+.screen{display:none}.screen.active{display:block}
+.card{background:#161b22;border:0.5px solid #30363d;border-radius:12px;padding:16px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:600;color:#8b949e;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em}
+.nav{display:flex;background:#161b22;border:0.5px solid #30363d;border-radius:10px;padding:3px;margin-bottom:16px;gap:3px}
+.nb{flex:1;padding:7px 4px;border:none;background:transparent;color:#8b949e;font-size:12px;border-radius:7px;cursor:pointer;font-family:inherit}
+.nb.active{background:#0d1117;color:#f0f6fc;font-weight:600}
+.big-btn{width:100%;padding:12px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px}
+.btn-p{background:#e94560;color:#fff}.btn-p:hover{background:#c73850}
+.btn-g{background:transparent;border:0.5px solid #30363d;color:#8b949e}.btn-g:hover{background:#161b22;color:#f0f6fc}
+.btn-b{background:#0f3460;color:#85b7eb}.btn-b:hover{background:#185fa5}
+.ir{margin-bottom:12px}
+.ir label{display:block;font-size:12px;color:#8b949e;margin-bottom:5px}
+.ir input,.ir select,.ir textarea{width:100%;padding:9px 11px;background:#0d1117;border:0.5px solid #30363d;border-radius:7px;color:#f0f6fc;font-size:14px;font-family:inherit}
+.ir textarea{resize:none;height:64px}
+.ir input:focus,.ir select:focus,.ir textarea:focus{outline:none;border-color:#e94560}
+.plan-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid #30363d}
+.plan-row:last-child{border-bottom:none}
+.pk{font-size:13px;color:#8b949e}.pv{font-size:14px;font-weight:600;color:#f0f6fc}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.sc{background:#0d1117;border:0.5px solid #30363d;border-radius:8px;padding:11px}
+.sl{font-size:12px;color:#8b949e;margin-bottom:3px}
+.sv{font-size:20px;font-weight:600;color:#f0f6fc}
+.sv.g{color:#2ecc71}.sv.a{color:#f0a500}.sv.r{color:#e74c3c}.sv.ac{color:#e94560}
+.badge{padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.badge.g{background:#0f3a1f;color:#2ecc71}.badge.r{background:#3a0f0f;color:#e74c3c}.badge.a{background:#3a2a0f;color:#f0a500}
+.flag{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid #30363d;font-size:13px}
+.flag:last-child{border-bottom:none}
+.fl{color:#8b949e}
+.feedback-box{background:#0d1117;border-left:3px solid #e94560;border-radius:0 7px 7px 0;padding:11px 13px;font-size:13px;line-height:1.6;color:#f0f6fc}
+.pill{display:inline-block;padding:3px 12px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:11px}
+.pill-v{background:#0f3a1f;color:#2ecc71}.pill-t{background:#0f1e35;color:#378add}.pill-a{background:#2a1f0f;color:#f0a500}
+.pb-wrap{background:#0d1117;border-radius:20px;height:7px;margin:7px 0 4px;overflow:hidden}
+.pb{height:100%;border-radius:20px;background:#e94560;transition:width 0.6s}
+.msg-box{background:#0d1117;border:0.5px solid #534ab7;border-radius:8px;padding:11px;font-size:13px;color:#afa9ec;font-style:italic}
+.login-btn{width:100%;padding:13px;border-radius:8px;border:none;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#2ecc71;color:#0f3a1f;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+.loader{text-align:center;color:#8b949e;font-size:13px;padding:20px 0}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- LOGIN -->
+<div class="screen active" id="s-login">
+  <div style="text-align:center;padding:40px 0 24px">
+    <div style="font-size:24px;font-weight:700;color:#f0f6fc;margin-bottom:6px">Coaching App</div>
+    <div style="font-size:14px;color:#8b949e">Adaptiv kostplan — Batool</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Logga in som</div>
+    <button class="login-btn btn-p" onclick="login('client')">Batool — Klientvy</button>
+    <button class="login-btn" style="background:#161b22;color:#f0f6fc;border:0.5px solid #30363d" onclick="login('coach')">Coach — Adminvy</button>
+  </div>
+  <div id="login-status" style="text-align:center;font-size:12px;color:#8b949e;padding:8px"></div>
+</div>
+
+<!-- KLIENTVY -->
+<div class="screen" id="s-client">
+  <div class="nav">
+    <button class="nb active" onclick="ctab('today',this)">Idag</button>
+    <button class="nb" onclick="ctab('log',this)">Logga</button>
+    <button class="nb" onclick="ctab('history',this)">Historik</button>
+    <button class="nb" onclick="ctab('schema',this)">Schema</button>
+  </div>
+
+  <div id="ct-today">
+    <div style="font-size:18px;font-weight:600;color:#f0f6fc;margin-bottom:2px">Hej Batool! 👋</div>
+    <div style="font-size:13px;color:#8b949e;margin-bottom:14px" id="c-date"></div>
+    <div class="card">
+      <div class="card-title">Dagens plan</div>
+      <div id="c-pill" class="pill pill-v">Vilodag</div>
+      <div class="plan-row"><span class="pk">Kalorier</span><span class="pv" id="c-kcal">1 300 kcal</span></div>
+      <div class="plan-row"><span class="pk">Protein</span><span class="pv" id="c-prot">122 g</span></div>
+      <div class="plan-row"><span class="pk">Kolhydrater</span><span class="pv" id="c-karb">80 g</span></div>
+      <div class="plan-row"><span class="pk">Fett</span><span class="pv" id="c-fett">52 g</span></div>
+      <div class="plan-row"><span class="pk">Vattenmål</span><span class="pv">2,5 L</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Feedback</div>
+      <div class="feedback-box" id="c-feedback">Fyll i din logg för att få personlig feedback.</div>
+    </div>
+    <div class="card" id="c-msg-card" style="display:none">
+      <div class="card-title">Meddelande från din coach</div>
+      <div class="msg-box" id="c-msg"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Mål-progress</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#8b949e;margin-bottom:3px"><span>Start: 56,5 kg</span><span>Mål: 52 kg</span></div>
+      <div class="pb-wrap"><div class="pb" id="c-bar" style="width:0%"></div></div>
+      <div style="font-size:13px;color:#8b949e;text-align:center;margin-top:4px" id="c-progress">Logga din vikt för att se progress</div>
+    </div>
+  </div>
+
+  <div id="ct-log" style="display:none">
+    <div class="card">
+      <div class="card-title">Ny loggning</div>
+      <div class="ir"><label>Vikt (kg)</label><input type="number" id="l-vikt" step="0.1" placeholder="t.ex. 56.2"></div>
+      <div class="ir"><label>Vatten drucket (liter)</label><input type="number" id="l-vatten" step="0.1" placeholder="t.ex. 2.5"></div>
+      <div class="ir"><label>Sovtid (timmar)</label><input type="number" id="l-sov" step="0.5" placeholder="t.ex. 7.5"></div>
+      <div class="ir"><label>Sömnkvalitet (1–10)</label><input type="number" id="l-sovkval" min="1" max="10" placeholder="1–10"></div>
+      <div class="ir"><label>Kostföljning (%)</label><input type="number" id="l-kost" min="0" max="100" placeholder="0–100"></div>
+      <div class="ir"><label>Energinivå (1–10)</label><input type="number" id="l-energi" min="1" max="10" placeholder="1–10"></div>
+      <div class="ir"><label>Hunger (1–10)</label><input type="number" id="l-hunger" min="1" max="10" placeholder="1–10"></div>
+      <div class="ir"><label>Antal steg</label><input type="number" id="l-steg" placeholder="t.ex. 9500"></div>
+      <div class="ir"><label>Tränade du?</label>
+        <select id="l-tranat"><option value="">Välj...</option><option value="ja">Ja</option><option value="nej">Nej</option></select>
+      </div>
+      <div class="ir"><label>Kommentar (valfritt)</label><textarea id="l-komm" placeholder="Period, stress, sjuk..."></textarea></div>
+      <button class="big-btn btn-p" onclick="saveLog()">Spara logg</button>
+    </div>
+  </div>
+
+  <div id="ct-history" style="display:none">
+    <div class="stat-grid">
+      <div class="sc"><div class="sl">Snitt vatten</div><div class="sv" id="h-vatten">—</div></div>
+      <div class="sc"><div class="sl">Snitt sömn</div><div class="sv" id="h-sov">—</div></div>
+      <div class="sc"><div class="sl">Snitt energi</div><div class="sv" id="h-energi">—</div></div>
+      <div class="sc"><div class="sl">Loggade dagar</div><div class="sv ac" id="h-days">0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Senaste loggningar</div>
+      <div id="h-list"><div class="loader">Laddar...</div></div>
+    </div>
+  </div>
+
+  <div id="ct-schema" style="display:none">
+    <div class="card">
+      <div class="card-title">Vilodag — 1 300 kcal</div>
+      <div class="plan-row"><span class="pk">Frukost</span><span class="pv" style="font-size:12px;text-align:right">2 ägg + turkisk yoghurt + gurka</span></div>
+      <div class="plan-row"><span class="pk">Lunch</span><span class="pv" style="font-size:12px;text-align:right">Kyckling halal + sallad + olivolja</span></div>
+      <div class="plan-row"><span class="pk">Snack</span><span class="pv" style="font-size:12px">Äpple + mandlar</span></div>
+      <div class="plan-row"><span class="pk">Middag</span><span class="pv" style="font-size:12px;text-align:right">Nötfärs halal + zucchini + tomatsås</span></div>
+      <div class="plan-row"><span class="pk">Kväll</span><span class="pv" style="font-size:12px">Kvarg + kanel</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Träningsdag — 1 450 kcal</div>
+      <div class="plan-row"><span class="pk">Frukost</span><span class="pv" style="font-size:12px;text-align:right">Havregryn + protein + bär</span></div>
+      <div class="plan-row"><span class="pk">Pre-träning</span><span class="pv" style="font-size:12px">Banan + jordnötssmör</span></div>
+      <div class="plan-row"><span class="pk">Lunch</span><span class="pv" style="font-size:12px;text-align:right">Kycklingbröst + ris + grönsaker</span></div>
+      <div class="plan-row"><span class="pk">Snack</span><span class="pv" style="font-size:12px">Kvarg + bär</span></div>
+      <div class="plan-row"><span class="pk">Middag</span><span class="pv" style="font-size:12px;text-align:right">Lax/kyckling + broccoli + olivolja</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Aktiv dag — 1 500 kcal</div>
+      <div class="plan-row"><span class="pk">Frukost</span><span class="pv" style="font-size:12px;text-align:right">3 ägg + toast + avokado</span></div>
+      <div class="plan-row"><span class="pk">Lunch</span><span class="pv" style="font-size:12px;text-align:right">Tonfisk + quinoa + spenat</span></div>
+      <div class="plan-row"><span class="pk">Snack</span><span class="pv" style="font-size:12px">Proteinbar / kvarg + frukt</span></div>
+      <div class="plan-row"><span class="pk">Middag</span><span class="pv" style="font-size:12px;text-align:right">Kyckling halal + sötpotatis + sallad</span></div>
+      <div class="plan-row"><span class="pk">Kväll</span><span class="pv" style="font-size:12px">Turkisk yoghurt + valnötter</span></div>
+    </div>
+  </div>
+
+  <button class="big-btn btn-g" style="margin-top:4px" onclick="logout()">Logga ut</button>
+</div>
+
+<!-- COACHVY -->
+<div class="screen" id="s-coach">
+  <div class="nav">
+    <button class="nb active" onclick="ktab('overview',this)">Översikt</button>
+    <button class="nb" onclick="ktab('override',this)">Override</button>
+    <button class="nb" onclick="ktab('logs',this)">Alla loggar</button>
+  </div>
+
+  <div id="kt-overview">
+    <div class="card">
+      <div class="card-title">Batool — statusöversikt</div>
+      <div class="flag"><span class="fl">Senaste loggning</span><span class="badge a" id="k-logg">Ingen data</span></div>
+      <div class="flag"><span class="fl">Aktuell vikt</span><span class="badge a" id="k-vikt">—</span></div>
+      <div class="flag"><span class="fl">Kvar till mål (52 kg)</span><span class="badge a" id="k-kvar">—</span></div>
+      <div class="flag"><span class="fl">Vattensnitt (7 dagar)</span><span class="badge a" id="k-vatten">—</span></div>
+      <div class="flag"><span class="fl">Sömnsnitt (7 dagar)</span><span class="badge a" id="k-somn">—</span></div>
+      <div class="flag"><span class="fl">Kostföljning (7 dagar)</span><span class="badge a" id="k-kost">—</span></div>
+      <div class="flag"><span class="fl">Viktplatå?</span><span class="badge a" id="k-plata">—</span></div>
+    </div>
+    <div class="stat-grid">
+      <div class="sc"><div class="sl">Totalt loggade dagar</div><div class="sv ac" id="k-days">0</div></div>
+      <div class="sc"><div class="sl">Träningspass</div><div class="sv g" id="k-pass">0</div></div>
+    </div>
+  </div>
+
+  <div id="kt-override" style="display:none">
+    <div class="card">
+      <div class="card-title">Manuell override</div>
+      <p style="font-size:12px;color:#8b949e;margin-bottom:12px">Lämna tomt = systemet styr. Fyll i = dina värden visas för Batool direkt.</p>
+      <div class="ir"><label>Override kcal</label><input type="number" id="ov-kcal" placeholder="Lämna tomt för auto"></div>
+      <div class="ir"><label>Override protein (g)</label><input type="number" id="ov-prot" placeholder="Lämna tomt för auto"></div>
+      <div class="ir"><label>Override kolhydrater (g)</label><input type="number" id="ov-karb" placeholder="Lämna tomt för auto"></div>
+      <div class="ir"><label>Override fett (g)</label><input type="number" id="ov-fett" placeholder="Lämna tomt för auto"></div>
+      <button class="big-btn btn-p" onclick="saveOverride()">Spara override</button>
+      <button class="big-btn btn-g" style="margin-top:8px" onclick="clearOverride()">Rensa — återgå till auto</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Meddelande till Batool</div>
+      <div class="ir"><textarea id="ov-msg" placeholder="Skriv ett personligt meddelande..."></textarea></div>
+      <button class="big-btn btn-b" onclick="saveMsg()">Skicka meddelande</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Privata coachanteckningar</div>
+      <div class="ir"><textarea id="ov-notes" placeholder="Syns bara för dig..."></textarea></div>
+      <button class="big-btn btn-g" onclick="saveNotes()">Spara anteckningar</button>
+    </div>
+  </div>
+
+  <div id="kt-logs" style="display:none">
+    <div class="card">
+      <div class="card-title">Alla loggningar</div>
+      <div id="k-loglist"><div class="loader">Laddar...</div></div>
+    </div>
+  </div>
+
+  <button class="big-btn btn-g" style="margin-top:4px" onclick="logout()">Logga ut</button>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://lhnrxkqtnbxyspitmxwx.supabase.co'
+const SUPABASE_KEY = 'sb_publishable_g57Ia67G4HbPT4mgEyz7Wg_xgXODM0k'
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+function showToast(msg, color='#2ecc71'){
+  const t=document.getElementById('toast')
+  t.textContent=msg; t.style.background=color
+  t.classList.add('show')
+  setTimeout(()=>t.classList.remove('show'),2500)
+}
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+async function login(role){
+  document.getElementById('login-status').textContent='Ansluter...'
+  if(role==='client'){show('s-client');await refreshClient()}
+  else{show('s-coach');await refreshCoach()}
+  document.getElementById('login-status').textContent=''
+}
+function logout(){show('s-login')}
+
+function ctab(tab,btn){
+  ['today','log','history','schema'].forEach(t=>document.getElementById('ct-'+t).style.display='none')
+  document.getElementById('ct-'+tab).style.display='block'
+  document.querySelectorAll('#s-client .nb').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+  if(tab==='history')refreshHistory()
+}
+function ktab(tab,btn){
+  ['overview','override','logs'].forEach(t=>document.getElementById('kt-'+t).style.display='none')
+  document.getElementById('kt-'+tab).style.display='block'
+  document.querySelectorAll('#s-coach .nb').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+  if(tab==='override')loadOverrideForm()
+  if(tab==='logs')loadAllLogs()
+}
+
+async function getLogs(){
+  const{data}=await sb.from('logs').select('*').order('date',{ascending:true})
+  return data||[]
+}
+async function getSetting(key){
+  const{data}=await sb.from('settings').select('value').eq('key',key).single()
+  return data?data.value:null
+}
+async function setSetting(key,value){
+  await sb.from('settings').upsert({key,value},{onConflict:'key'})
+}
+
+function computePlan(last,ov){
+  let type='vila',kcal=1300,prot=122,karb=80,fett=52
+  if(last){
+    if(last.tranat==='ja'){type='träning';kcal=1450;prot=135;karb=100;fett=55}
+    else if(last.steg>=8000){type='aktiv';kcal=1500;prot=128;karb=95;fett=58}
+    if(last.sov<6||last.vatten<2||last.kost<60){kcal+=130;prot+=10;karb+=15;fett+=5}
+  }
+  const o=ov||{}
+  return{type,kcal:o.kcal?parseInt(o.kcal):kcal,prot:o.prot?parseInt(o.prot):prot,karb:o.karb?parseInt(o.karb):karb,fett:o.fett?parseInt(o.fett):fett}
+}
+
+function computeFeedback(last){
+  if(!last)return'Fyll i din logg för att få personlig feedback.'
+  const m=[]
+  if(last.vatten<2.5)m.push('Drick mer vatten — du drack '+parseFloat(last.vatten).toFixed(1)+'L, målet är 2,5L.')
+  if(last.sov<6)m.push('Sömn under 6h påverkar hormonerna — prioritera vila ikväll.')
+  if(last.kost<60)m.push('Kostföljning låg ('+last.kost+'%) — sikta på minst 80% idag.')
+  if(last.hunger>=8)m.push('Hunger hög ('+last.hunger+'/10) — lägg till ett proteinsnack.')
+  if(!m.length)m.push('Bra jobbat! Alla nyckelmetrics ser bra ut. Kör på! 💪')
+  return m.join(' ')
+}
+
+async function refreshClient(){
+  const now=new Date()
+  document.getElementById('c-date').textContent=now.toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'long'})
+  const logs=await getLogs()
+  const ovRaw=await getSetting('override')
+  const ov=ovRaw?JSON.parse(ovRaw):{}
+  const msg=await getSetting('coach_message')
+  const last=logs.length?logs[logs.length-1]:null
+  const plan=computePlan(last,ov)
+  const pill=document.getElementById('c-pill')
+  if(plan.type==='träning'){pill.className='pill pill-t';pill.textContent='Träningsdag'}
+  else if(plan.type==='aktiv'){pill.className='pill pill-a';pill.textContent='Aktiv dag'}
+  else{pill.className='pill pill-v';pill.textContent='Vilodag'}
+  document.getElementById('c-kcal').textContent=plan.kcal+' kcal'
+  document.getElementById('c-prot').textContent=plan.prot+' g'
+  document.getElementById('c-karb').textContent=plan.karb+' g'
+  document.getElementById('c-fett').textContent=plan.fett+' g'
+  document.getElementById('c-feedback').textContent=computeFeedback(last)
+  const mc=document.getElementById('c-msg-card')
+  if(msg){mc.style.display='block';document.getElementById('c-msg').textContent=msg}
+  else mc.style.display='none'
+  const vikter=logs.filter(l=>l.vikt).map(l=>parseFloat(l.vikt))
+  if(vikter.length){
+    const latest=vikter[vikter.length-1]
+    const pct=Math.max(0,Math.min(100,((56.5-latest)/(56.5-52))*100))
+    document.getElementById('c-bar').style.width=pct.toFixed(1)+'%'
+    document.getElementById('c-progress').textContent=latest.toFixed(1)+' kg — '+(latest-52).toFixed(1)+' kg kvar till mål'
+  }
+}
+
+async function saveLog(){
+  const entry={
+    date:new Date().toISOString().slice(0,10),
+    vikt:parseFloat(document.getElementById('l-vikt').value)||null,
+    vatten:parseFloat(document.getElementById('l-vatten').value)||0,
+    sov:parseFloat(document.getElementById('l-sov').value)||0,
+    sovkval:parseInt(document.getElementById('l-sovkval').value)||0,
+    kost:parseInt(document.getElementById('l-kost').value)||0,
+    energi:parseInt(document.getElementById('l-energi').value)||0,
+    hunger:parseInt(document.getElementById('l-hunger').value)||0,
+    steg:parseInt(document.getElementById('l-steg').value)||0,
+    tranat:document.getElementById('l-tranat').value,
+    komm:document.getElementById('l-komm').value
+  }
+  const{error}=await sb.from('logs').insert(entry)
+  if(error){showToast('Fel vid sparning. Försök igen.','#e74c3c');return}
+  ;['l-vikt','l-vatten','l-sov','l-sovkval','l-kost','l-energi','l-hunger','l-steg','l-komm'].forEach(id=>document.getElementById(id).value='')
+  document.getElementById('l-tranat').value=''
+  showToast('Logg sparad!')
+  await refreshClient()
+  ctab('today',document.querySelectorAll('#s-client .nb')[0])
+  document.querySelectorAll('#s-client .nb')[0].classList.add('active')
+}
+
+async function refreshHistory(){
+  const logs=await getLogs()
+  document.getElementById('h-days').textContent=logs.length
+  const list=document.getElementById('h-list')
+  if(!logs.length){list.innerHTML='<p style="color:#8b949e;font-size:13px">Inga loggningar än.</p>';return}
+  list.innerHTML=[...logs].reverse().slice(0,10).map(l=>`
+    <div style="border-bottom:0.5px solid #30363d;padding:9px 0;font-size:12px">
+      <div style="font-weight:600;color:#f0f6fc;margin-bottom:3px">${l.date}</div>
+      <div style="color:#8b949e;display:flex;flex-wrap:wrap;gap:6px">
+        ${l.vikt?`<span>Vikt: ${parseFloat(l.vikt).toFixed(1)}kg</span>`:''}
+        ${l.vatten?`<span>Vatten: ${l.vatten}L</span>`:''}
+        ${l.sov?`<span>Sömn: ${l.sov}h</span>`:''}
+        ${l.steg?`<span>Steg: ${parseInt(l.steg).toLocaleString('sv-SE')}</span>`:''}
+        ${l.tranat?`<span style="color:${l.tranat==='ja'?'#378add':'#8b949e'}">Tränat: ${l.tranat}</span>`:''}
+      </div>
+    </div>`).join('')
+  const avg=key=>{const v=logs.filter(l=>l[key]).map(l=>parseFloat(l[key]));return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'—'}
+  document.getElementById('h-vatten').textContent=avg('vatten')+(logs.some(l=>l.vatten)?' L':'')
+  document.getElementById('h-sov').textContent=avg('sov')+(logs.some(l=>l.sov)?' h':'')
+  document.getElementById('h-energi').textContent=avg('energi')+(logs.some(l=>l.energi)?'/10':'')
+}
+
+async function refreshCoach(){
+  const logs=await getLogs()
+  const last=logs.length?logs[logs.length-1]:null
+  const fl=document.getElementById('k-logg')
+  if(last){fl.textContent=last.date;fl.className='badge g'}else{fl.textContent='Ingen loggning';fl.className='badge r'}
+  const vikter=logs.filter(l=>l.vikt).map(l=>parseFloat(l.vikt))
+  if(vikter.length){
+    const latest=vikter[vikter.length-1]
+    const kv=document.getElementById('k-vikt');kv.textContent=latest.toFixed(1)+' kg';kv.className='badge a'
+    const kb=document.getElementById('k-kvar');kb.textContent=(latest-52).toFixed(1)+' kg';kb.className=latest-52<2?'badge g':'badge a'
+  }
+  const last7=logs.slice(-7)
+  const avg7=key=>{const v=last7.filter(l=>l[key]).map(l=>parseFloat(l[key]));return v.length?v.reduce((a,b)=>a+b,0)/v.length:null}
+  const vs=avg7('vatten'),ss=avg7('sov'),ks=avg7('kost')
+  const vb=document.getElementById('k-vatten')
+  if(vs!==null){vb.textContent=vs.toFixed(1)+' L';vb.className=vs>=2.5?'badge g':'badge r'}else{vb.textContent='Ingen data';vb.className='badge a'}
+  const sb2=document.getElementById('k-somn')
+  if(ss!==null){sb2.textContent=ss.toFixed(1)+' h';sb2.className=ss>=6?'badge g':'badge r'}else{sb2.textContent='Ingen data';sb2.className='badge a'}
+  const kb2=document.getElementById('k-kost')
+  if(ks!==null){kb2.textContent=Math.round(ks)+'%';kb2.className=ks>=60?'badge g':'badge r'}else{kb2.textContent='Ingen data';kb2.className='badge a'}
+  const pb=document.getElementById('k-plata')
+  if(vikter.length>=5){const span=Math.max(...vikter)-Math.min(...vikter);pb.textContent=span<0.3?'Möjlig platå':'Rör sig';pb.className=span<0.3?'badge r':'badge g'}
+  else{pb.textContent='För lite data';pb.className='badge a'}
+  document.getElementById('k-days').textContent=logs.length
+  document.getElementById('k-pass').textContent=logs.filter(l=>l.tranat==='ja').length
+}
+
+async function loadOverrideForm(){
+  const ovRaw=await getSetting('override')
+  const ov=ovRaw?JSON.parse(ovRaw):{}
+  document.getElementById('ov-kcal').value=ov.kcal||''
+  document.getElementById('ov-prot').value=ov.prot||''
+  document.getElementById('ov-karb').value=ov.karb||''
+  document.getElementById('ov-fett').value=ov.fett||''
+  document.getElementById('ov-msg').value=await getSetting('coach_message')||''
+  document.getElementById('ov-notes').value=await getSetting('coach_notes')||''
+}
+
+async function saveOverride(){
+  const ov={kcal:document.getElementById('ov-kcal').value,prot:document.getElementById('ov-prot').value,karb:document.getElementById('ov-karb').value,fett:document.getElementById('ov-fett').value}
+  await setSetting('override',JSON.stringify(ov))
+  showToast('Override sparad! Batool ser det direkt.')
+}
+async function clearOverride(){
+  await setSetting('override','{}')
+  ;['ov-kcal','ov-prot','ov-karb','ov-fett'].forEach(id=>document.getElementById(id).value='')
+  showToast('Override rensad — systemet styr igen.')
+}
+async function saveMsg(){
+  await setSetting('coach_message',document.getElementById('ov-msg').value)
+  showToast('Meddelande skickat till Batool!')
+}
+async function saveNotes(){
+  await setSetting('coach_notes',document.getElementById('ov-notes').value)
+  showToast('Anteckningar sparade.')
+}
+
+async function loadAllLogs(){
+  const logs=await getLogs()
+  const list=document.getElementById('k-loglist')
+  if(!logs.length){list.innerHTML='<p style="color:#8b949e;font-size:13px">Inga loggningar än.</p>';return}
+  list.innerHTML=[...logs].reverse().map(l=>`
+    <div style="border-bottom:0.5px solid #30363d;padding:9px 0;font-size:12px">
+      <div style="font-weight:600;color:#f0f6fc;margin-bottom:3px">${l.date}${l.tranat==='ja'?' <span style="color:#378add">Träning</span>':''}</div>
+      <div style="color:#8b949e;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px">
+        ${l.vikt?`<span>Vikt: ${parseFloat(l.vikt).toFixed(1)}kg</span>`:''}
+        ${l.vatten?`<span>Vatten: ${l.vatten}L</span>`:''}
+        ${l.sov?`<span>Sömn: ${l.sov}h</span>`:''}
+        ${l.kost?`<span>Kost: ${l.kost}%</span>`:''}
+        ${l.energi?`<span>Energi: ${l.energi}/10</span>`:''}
+        ${l.hunger?`<span>Hunger: ${l.hunger}/10</span>`:''}
+        ${l.steg?`<span>Steg: ${parseInt(l.steg).toLocaleString('sv-SE')}</span>`:''}
+      </div>
+      ${l.komm?`<div style="color:#8b949e;margin-top:3px;font-style:italic">"${l.komm}"</div>`:''}
+    </div>`).join('')
+}
+</script>
+</body>
+</html>
